@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GooseNut · Memory Record</title>
+    <script src="opening-animation.js"></script>
+    <style>
+ :root {
+    --rotate-speed: 40;
+    --count: 8;
+    --easing: cubic-bezier(0.000,0.37,1.000,0.63);
+}
+
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #110921;
+}
+#vanta-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.void {
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+    position: relative;
+    z-index: 1;
+    aspect-ratio: 1/1;
+}
+ul:hover * {
+    animation-play-state: paused;
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    z-index: 1;
+
+}
+
+li {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    animation: rotateCW calc(var(--rotate-speed)*1s)var(--easing) infinite;
+}
+
+.card {
+    width: 36%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 24px;
+    gap: 8px;
+    background: #a5cbff;
+    box-shadow: 0px 4px 12px rgba(92, 19, 201, 0.1),0px 16px 32px rgba(165, 135, 255, 0.1);
+    border-radius: 12px;
+    font: 400 14px '';
+    color: hsl(0, 0%, 30%);
+    animation: rotateCCW calc(var(--rotate-speed)* 1s) var(--easing) infinite;
+    cursor: pointer;
+}
+body.preview-open .card-list li,
+body.preview-open .card-list .card {
+    animation-play-state: paused;
+}
+body.timeline-paused .card-list li,
+body.timeline-paused .card-list .card,
+body.timeline-paused .needle {
+    animation-play-state: paused;
+}
+.card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+/* 链接样式 */
+.card a {
+    text-decoration: none;
+    color: unset;
+    display: block;
+    width: 100%;
+    height: 110px;
+    overflow: hidden;
+}
+.preview-dialog {
+    box-sizing: border-box;
+    width: min(720px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 56px 24px 24px;
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 80px rgba(12, 5, 46, 0.3);
+    overflow: auto;
+}
+.preview-dialog[open] {
+    animation: preview-zoom 0.25s ease-out;
+}
+.preview-dialog::backdrop {
+    background: rgba(12, 5, 46, 0.65);
+    backdrop-filter: blur(5px);
+}
+.preview-content {
+    display: grid;
+    place-items: center;
+    gap: 20px;
+}
+.preview-description {
+    width: 100%;
+    margin: 0;
+    color: #0d0935;
+    font-family: Arial, "Microsoft YaHei", sans-serif;
+    font-size: 16px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.preview-content img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: max(120px, calc(100vh - 230px));
+    object-fit: contain;
+}
+.preview-year {
+    padding: 40px;
+    font-size: clamp(48px, 12vw, 96px);
+    font-weight: 600;
+    color: #333;
+}
+.preview-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: #f0edf7;
+    color: #333;
+    font-size: 24px;
+    cursor: pointer;
+}
+@keyframes preview-zoom {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+}
+.music-widget {
+    --music-color: #b0d4ff;
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 10;
+    max-width: calc(100vw - 32px);
+    font-family: Arial, "Microsoft YaHei", sans-serif;
+    color: #0d0935;
+}
+.music-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+.music-note-icon,
+.music-track-name {
+    background: var(--music-color);
+    box-shadow: 0 4px 20px rgba(5, 8, 32, 0.2);
+    transition: background 0.2s;
+}
+.music-note-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 54px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+}
+.music-note-icon svg {
+    position: static;
+    display: block;
+    width: 28px;
+    height: 28px;
+    z-index: auto;
+}
+.music-track-name {
+    display: block;
+    width: max-content;
+    min-width: 0;
+    padding: 13px 18px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.music-toggle:hover .music-note-icon,
+.music-toggle:hover .music-track-name,
+.music-toggle[aria-expanded="true"] .music-note-icon {
+    background: #d7eaff;
+}
+.music-toggle:focus-visible {
+    outline: 2px solid #b0d4ff;
+    outline-offset: 6px;
+    border-radius: 16px;
+}
+.music-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 16px);
+    width: min(360px, calc(100vw - 32px));
+    border: 1px solid rgba(176, 212, 255, 0.5);
+    border-radius: 16px;
+    overflow: hidden;
+    background: #eaf4ff;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+}
+.music-panel[hidden] { display: none; }
+.music-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.music-close {
+    flex: 0 0 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--music-color);
+    color: inherit;
+    font-size: 24px;
+    cursor: pointer;
+}
+.music-embed iframe {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 200px;
+    border: 0;
+    background: #0d0935;
+}
+.music-source {
+    display: block;
+    padding: 12px 16px;
+    color: #264b83;
+    font-size: 12px;
+    text-decoration: none;
+}
+.music-source:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+    .music-widget { right: 16px; bottom: 16px; }
+    .music-note-icon { flex-basis: 46px; width: 46px; height: 46px; }
+    .music-track-name { font-size: 13px; padding: 11px 14px; }
+}
+
+/* 框框高度 */
+.model-name {
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 100%;
+    color: #000000;
+    display: block;
+}
+/* svg样式 */
+svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+/* 列表的延迟 */
+.card-list > li,
+.card-list > li .card {
+    animation-delay: calc(var(--rotate-speed) / var(--count) * var(--index) * -1s);
+}
+
+/* 顺时针动画 */
+@keyframes rotateCW {
+    from {
+        transform: translate3d(0px, -50%, -1px) rotate(-45deg);
+    }
+
+    to {
+        transform: translate3d(0px, -50%, 0px) rotate(-315deg);
+    }
+}
+/* 逆时针动画 */
+@keyframes rotateCCW {
+    from {
+        transform: rotate(45deg);
+    }
+    to {
+        transform: rotate(315deg);
+    }
+}
+/* 圆 */
+.center-circle {
+    position: absolute;
+    width: 10%;
+    min-width: 44px;
+    padding: 0;
+    border: 0;
+    display: grid;
+    place-items: center;
+    color: #b0d4ff;
+    cursor: pointer;
+    font-family: Arial, "Microsoft YaHei", sans-serif;
+    aspect-ratio: 1 / 1;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    background: #0d0935;
+    box-shadow: 0px 18px 36px -18px rgba(12, 5, 46, 0.3),
+    0px 30px 60px -12px rgba(12, 5, 46, 0.25);
+    border-radius: 50%;
+    background-size: cover;
+    background-position: -35px 0;
+}
+.center-circle:focus-visible {
+    outline: 3px solid #b0d4ff;
+    outline-offset: 5px;
+}
+.timeline-icon {
+    width: 24%;
+    height: 28%;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+.timeline-icon::before,
+.timeline-icon::after {
+    content: "";
+    width: 30%;
+    height: 100%;
+    border-radius: 2px;
+    background: currentColor;
+}
+.center-circle[aria-pressed="true"] .timeline-icon {
+    background: currentColor;
+    clip-path: polygon(12% 0, 100% 50%, 12% 100%);
+    transform: translateX(8%);
+}
+.center-circle[aria-pressed="true"] .timeline-icon::before,
+.center-circle[aria-pressed="true"] .timeline-icon::after {
+    display: none;
+}
+.timeline-tooltip {
+    position: absolute;
+    bottom: calc(100% + 14px);
+    left: 50%;
+    transform: translate(-50%, 4px);
+    padding: 9px 14px;
+    border-radius: 10px;
+    background: #0d0935;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+}
+.center-circle:hover .timeline-tooltip,
+.center-circle:focus-visible .timeline-tooltip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+.second-circle {
+    position: absolute;
+    width: 40%;
+    aspect-ratio: 1 / 1;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #FFFFFF;
+    box-shadow: 0px 18px 36px -18px rgba(0, 0, 0, 0.3),
+    0px 30px 60px -12px rgba(0, 0, 0, 0.25);
+    border-radius: 50%;
+    background-size: cover;
+    background-image: url(流体gif.gif);
+}
+.last-circle {
+    position: absolute;
+    width: 66%;
+    aspect-ratio: 1 / 1;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    background: #FFFFFF;
+    opacity: 0.25;
+    box-shadow: 0px 18px 36px -18px rgba(0, 0, 0, 0.3),
+    0px 30px 60px -12px rgba(0, 0, 0, 0.25);
+    border-radius: 50%;
+    background-image: url(流体gif.gif);
+}
+.crop {
+    -webkit-mask-image: linear-gradient(90deg,rgba(0,0,0,0) 50%,rgba(0,0,0,1) 50%, rgb(104, 11, 11));
+}
+.mask {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 50vw;
+    z-index: 2;
+    background: #fff;
+    overflow: hidden;
+}
+.mask.has-burn-edge {
+    --seam-width: clamp(72px, 12vw, 144px);
+    --seam-overhang: calc(var(--seam-width) / 3);
+    --seam-offset: 40px;
+    width: calc(50vw + var(--seam-overhang) + var(--seam-offset));
+    background-image: var(--burn-color);
+    background-size: var(--seam-width) 1024px;
+    background-position: right top;
+    background-repeat: repeat-y;
+    -webkit-mask-image: linear-gradient(#fff, #fff), var(--burn-alpha);
+    mask-image: linear-gradient(#fff, #fff), var(--burn-alpha);
+    -webkit-mask-size: calc(100% - var(--seam-width) + 1px) 100%, var(--seam-width) 1024px;
+    mask-size: calc(100% - var(--seam-width) + 1px) 100%, var(--seam-width) 1024px;
+    -webkit-mask-position: left top, right top;
+    mask-position: left top, right top;
+    -webkit-mask-repeat: no-repeat, repeat-y;
+    mask-repeat: no-repeat, repeat-y;
+    animation: burn-drift 45s linear infinite;
+}
+/* 淡纸纹：调大 opacity 会加深纹理；独立叠层沿用遮罩的溶解轮廓。 */
+.mask::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("paper-texture.svg") repeat;
+    background-size: 180px 180px;
+    opacity: 0.065;
+    pointer-events: none;
+}
+.pointer-lens {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 50vw;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    /* 照片在纸面边缘淡出，保留原来的深蓝色焦痕。 */
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 72px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 72px), transparent);
+}
+.mask > :not(.pointer-lens) { z-index: 1; }
+.mask.has-burn-edge .side-title {
+    right: var(--seam-overhang);
+}
+@keyframes burn-drift {
+    to {
+        background-position: 100% -1024px;
+        -webkit-mask-position: 0 0, 100% -1024px;
+        mask-position: 0 0, 100% -1024px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mask.has-burn-edge { animation: none; }
+}
+.side-title {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translate(25%, -50%);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(28px, min(8vw, 10vh), 120px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: rgba(129, 166, 221, 0.36);
+    text-shadow: 0 0 32px rgba(44, 91, 167, 0.18);
+    user-select: none;
+    pointer-events: none;
+}
+
+/* 角落英文装饰：只作排版点缀，不拦截鼠标。 */
+.corner-caption {
+    position: absolute;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    font-size: clamp(9px, 0.75vw, 11px);
+    font-weight: 400;
+    line-height: 1.8;
+    letter-spacing: 0.2em;
+    color: #829bbd;
+    pointer-events: none;
+    user-select: none;
+}
+.corner-caption span { display: block; }
+.corner-caption--top-left {
+    top: 26px;
+    left: clamp(16px, 4vw, 64px);
+    max-width: calc(50vw - 40px);
+}
+.corner-caption--top-left::before {
+    content: "";
+    display: block;
+    width: 32px;
+    height: 1px;
+    margin-bottom: 10px;
+    background: #b0d4ff;
+}
+.corner-caption--top-left .corner-subline {
+    margin-top: 3px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+}
+.corner-caption--bottom-left {
+    bottom: 3px;
+    left: clamp(16px, 4vw, 64px);
+    max-width: calc(50vw - 32px);
+    font-size: 8px;
+    letter-spacing: 0.12em;
+}
+.corner-caption--top-right {
+    position: fixed;
+    z-index: 6;
+    top: 28px;
+    right: 28px;
+    max-width: calc(50vw - 32px);
+    color: rgba(176, 212, 255, 0.65);
+    text-align: right;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(12px, 1.2vw, 18px);
+    font-style: italic;
+    letter-spacing: 0.06em;
+}
+@media (max-width: 600px) {
+    .corner-caption--top-left { top: 20px; letter-spacing: 0.12em; }
+    .corner-caption--top-right { top: 20px; right: 16px; }
+}
+@media (max-height: 480px) {
+    .corner-caption--top-left { display: none; }
+}
+.memory-note {
+    position: absolute;
+    top: clamp(24px, 20vh, 180px);
+    left: clamp(16px, 4vw, 64px);
+    width: min(340px, calc(50vw - clamp(48px, 9vw, 144px)));
+    max-height: max(80px, calc(100vh - clamp(24px, 20vh, 180px) - clamp(105px, 14vw, 180px) * 1.55 - 44px));
+    overflow-y: auto;
+    scrollbar-width: thin;
+    color: #0d0935;
+    font-family: "KaiTi", "STKaiti", "Songti SC", "SimSun", serif;
+    font-size: clamp(13px, 1.15vw, 17px);
+    line-height: 2.2;
+    letter-spacing: 0.04em;
+    overflow-wrap: anywhere;
+}
+.memory-note p {
+    margin: 0 0 1em;
+}
+.memory-note .memory-signature {
+    margin: 1.4em 0 0;
+    text-align: right;
+}
+@media (max-width: 600px) {
+    .memory-note { line-height: 1.9; }
+}
+.goose-lane {
+    --goose-height: clamp(105px, 14vw, 180px);
+    position: absolute;
+    left: 0;
+    bottom: 20px;
+    width: 50vw;
+    height: calc(var(--goose-height) * 1.55);
+    overflow: hidden;
+    pointer-events: none;
+}
+.goose {
+    position: absolute;
+    z-index: 1;
+    left: 100%;
+    bottom: 0;
+    height: var(--goose-height);
+    aspect-ratio: 282 / 361;
+    overflow: visible;
+    pointer-events: auto;
+    animation: goose-travel 18s linear infinite;
+    animation-delay: -4.5s;
+}
+.goose-frame {
+    /* 三帧共用相同原图坐标，气泡可超出鹅的悬停区域。 */
+    position: absolute;
+    left: -298.58156%;
+    top: -155.95568%;
+    width: 846.80851%;
+    max-width: none;
+    height: auto;
+    display: block;
+    user-select: none;
+    pointer-events: none;
+    animation: goose-steps 0.56s step-end infinite;
+}
+.goose-frame--second {
+    animation-delay: -0.28s;
+}
+.goose-frame--hover {
+    animation: none;
+    opacity: 1;
+    visibility: hidden;
+}
+.goose:hover {
+    animation-play-state: paused;
+}
+.goose:hover .goose-frame:not(.goose-frame--hover) {
+    animation-play-state: paused;
+    visibility: hidden;
+}
+.goose:hover .goose-frame--hover {
+    visibility: visible;
+}
+.goose-trail {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+.goose-footprint {
+    position: absolute;
+    width: clamp(6px, 0.65vw, 10px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(13, 9, 53, 0.4) 0%,
+        rgba(13, 9, 53, 0.2) 35%,
+        rgba(13, 9, 53, 0) 75%);
+    animation: footprint-fade 3.6s linear forwards;
+}
+@keyframes footprint-fade {
+    from { opacity: 0.85; transform: translate(-50%, -50%) scale(0.85); }
+    to { opacity: 0; transform: translate(-50%, -50%) scale(1.25); }
+}
+@keyframes goose-travel {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-50vw - 100%)); }
+}
+@keyframes goose-steps {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .goose { left: 24px; animation: none; }
+    .goose-frame { animation: none; }
+    .goose-frame--second { opacity: 0; }
+    .goose-trail { display: none; }
+}
+
+.needle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44%;
+    aspect-ratio: 1;
+    z-index: 4;
+    pointer-events: none;
+    transform-origin: 44.8% 91.5%;
+    animation: clock 120s linear infinite;
+}
+.needle img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+@keyframes clock {
+    from {
+        transform: translate(-44.8%, -91.5%) rotate(0deg);
+    }
+    to {
+        transform: translate(-44.8%, -91.5%) rotate(360deg);
+    }
+}
+/* 首次入场前隐藏对应元素，防止先显示完整页面再播放动画。 */
+html.intro-pending .mask,
+html.intro-pending .side-title,
+html.intro-pending .memory-note,
+html.intro-pending .crop,
+html.intro-pending .center-circle,
+html.intro-pending .needle,
+html.intro-pending .goose-lane {
+    opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    html.intro-pending .mask,
+    html.intro-pending .side-title,
+    html.intro-pending .memory-note,
+    html.intro-pending .crop,
+    html.intro-pending .center-circle,
+    html.intro-pending .needle,
+    html.intro-pending .goose-lane { opacity: 1; }
+}
+    </style>
+</head>
+<body>
+    <div id="vanta-bg" aria-hidden="true"></div>
+    <!-- 右上角英文装饰文案 -->
+    <p class="corner-caption corner-caption--top-right" aria-hidden="true" lang="en">
+        <span>Some moments</span>
+        <span>stay with us.</span>
+    </p>
+    <div class="void" id="void">
+        <div class="crop">
+            <!-- 照片说明：修改每张卡片 data-description 引号内的文字，点击照片后会显示在图片下方。 -->
+            <ul class="card-list" style="--count:9;">
+                <li style="--index:0;">
+                    <div class="card" data-description="2025.5 妻子假装游客在我的摊位前占位，站街，挪一次五十，我准备拍照留证，但是拍她的时候她感到不好意思不让我拍。"><a href="photos/028da2905db2d06d40d2f81ac4f59ad2.jpg">
+                        <img src="photos/028da2905db2d06d40d2f81ac4f59ad2.jpg" alt="回忆照片 1"></a></div>
+                </li>
+                <li style="--index:1;">
+                    <div class="card" data-description="2025.4.14 ga08因为大风变成摊主only，撤展的时候让妻子去帮忙拿1个袋子，结果妻子拿回来了20个，还戴在头上说这个是盖头。"><a href="photos/3388ae8ae5231a1cfb426622cb3d7765.jpg">
+                        <img src="photos/3388ae8ae5231a1cfb426622cb3d7765.jpg" alt="回忆照片 2"></a></div>
+                </li>
+                <li style="--index:2;">
+                    <div class="card" data-description="2025.4 和妻子打了双影奇境全成就，被炸弹炸死了很多次。"><a href="photos/371d11ab36832537ad14d32935efdae8.jpg">
+                        <img src="photos/371d11ab36832537ad14d32935efdae8.jpg" alt="回忆照片 3"></a></div>
+                </li>
+                <li style="--index:3;">
+                    <div class="card" data-description="2025.3.21 和妻子打分手厨房，妻子说我们是Neal和Moz"><a href="photos/5f670002a5493eceb0abb0ced3eefe3c.jpg">
+                        <img src="photos/5f670002a5493eceb0abb0ced3eefe3c.jpg" alt="回忆照片 4"></a></div>
+                </li>
+                <li style="--index:4;">
+                    <div class="card" data-description="2026.5.13 妻子抢了我的switch打人森，我没有一点办法。"><a href="photos/625e4d4b5a3217ed73bc946f8a6c2a29.jpg">
+                        <img src="photos/625e4d4b5a3217ed73bc946f8a6c2a29.jpg" alt="回忆照片 5"></a></div>
+                </li>
+                <li style="--index:5;">
+                    <div class="card" data-description="2026.9.12 和妻子在上海，妻子穿了我挑的外套，很可爱"><a href="photos/64d46487cadfaddade1356d9d574b457.jpg">
+                        <img src="photos/64d46487cadfaddade1356d9d574b457.jpg" alt="回忆照片 6"></a></div>
+                </li>
+                <li style="--index:6;">
+                    <div class="card" data-description="2026.5.3 妻子在被淹家洗碗，穿了我的风衣，有萌袖。"><a href="photos/795505d31fc432c70495aebc2049a27c.jpg">
+                        <img src="photos/795505d31fc432c70495aebc2049a27c.jpg" alt="回忆照片 7"></a></div>
+                </li>
+                <li style="--index:7;">
+                    <div class="card" data-description="2026.5.4 11:15 妻子拉着我的手不让我起床，并且发出尖锐的爆鸣表示不想起床，鉴定为卖萌。"><a href="photos/a0e84de26154d59046bb5f5fd027cfa8.jpg">
+                        <img src="photos/a0e84de26154d59046bb5f5fd027cfa8.jpg" alt="回忆照片 8"></a></div>
+                </li>
+                <li style="--index:8;">
+                    <div class="card" data-description="2025.4.7 妻子从英国回来，给我带了伴手礼"><a href="photos/df61a29fb0acbe4ee76921bf306a44bf.jpg">
+                        <img src="photos/df61a29fb0acbe4ee76921bf306a44bf.jpg" alt="回忆照片 9"></a></div>
+                </li>
+            </ul>
+            <div class="last-circle"></div>
+            <div class="second-circle"></div>
+        </div>
+        <div class="mask">
+            <canvas class="pointer-lens" aria-hidden="true" data-image="photos/4d32b18d69e5fd2229c3136152872ae9.jpg"></canvas>
+            <!-- 左上角与左下角英文装饰文案 -->
+            <p class="corner-caption corner-caption--top-left" aria-hidden="true" lang="en">
+                <span>THE MEMORY ARCHIVE</span>
+                <span class="corner-subline">Little things. Precious days.</span>
+            </p>
+            <p class="corner-caption corner-caption--bottom-left" aria-hidden="true" lang="en">OUR STORY, STILL UNFOLDING.</p>
+            <span class="side-title" aria-hidden="true">MEMORY RECORD</span>
+            <!-- 左侧寄语：在这里修改正文和署名。 -->
+            <section class="memory-note" aria-label="写给回忆的话" lang="zh-CN">
+                <p>为了纪念一些最珍贵的事情，我做了一个这样一个网站。可以放上和妻子一块的回忆。</p>
+                <p>这样就可以一直重复回看，但是因为太赶工了，好多地方还没有写完，等我以后再完善。</p>
+                <p>和你在一起的每一天都弥足珍贵，我希望你可以一直这样快乐，幸福。</p>
+                <p class="memory-signature">——椰肉 2026.11.3</p>
+            </section>
+            <div class="goose-lane" aria-hidden="true">
+                <div class="goose-trail"></div>
+                <div class="goose">
+                    <img class="goose-frame" src="goose/757e7addd28c1f13004b2669111fccf5.png" alt="" draggable="false">
+                    <img class="goose-frame goose-frame--second" src="goose/17ecd9bbb8282b26a9cd446ea7e45325.png" alt="" draggable="false">
+                    <img class="goose-frame goose-frame--hover" src="goose/ee9b0a49df599babbf4577070ebfb33f.png" alt="" draggable="false">
+                </div>
+            </div>
+        </div>
+        <button class="center-circle" id="timeline-toggle" type="button" aria-label="暂停卡片和指针" aria-pressed="false">
+            <span class="timeline-icon" aria-hidden="true"></span>
+            <span class="timeline-tooltip" aria-hidden="true">让时间停一下</span>
+        </button>
+        <div class="needle">
+            <img src="微信图片_20240921200501.png" alt="缓慢旋转的时针图案">
+        </div>
+    </div>
+    <dialog class="preview-dialog" id="preview-dialog" aria-label="卡片放大预览">
+        <button class="preview-close" type="button" aria-label="关闭预览">&times;</button>
+        <div class="preview-content" id="preview-content"></div>
+    </dialog>
+    <aside class="music-widget" aria-label="音乐播放器">
+        <section class="music-panel" id="music-panel" aria-label="歌曲在线播放器" hidden>
+            <div class="music-panel-heading">
+                <span data-track-label>Perfect · Ed Sheeran</span>
+                <button class="music-close" id="music-close" type="button" aria-label="关闭播放器并停止播放">&times;</button>
+            </div>
+            <div class="music-embed" id="music-embed"></div>
+            <a class="music-source" id="music-source" href="https://www.youtube.com/watch?v=2Vv-BfVoq4g" target="_blank" rel="noopener noreferrer">在 YouTube 打开官方 MV ↗</a>
+        </section>
+        <button class="music-toggle" id="music-toggle" type="button" aria-label="播放 Perfect · Ed Sheeran" aria-expanded="false" aria-controls="music-panel">
+            <span class="music-note-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <path d="M9 18V5l12-2v13M9 8l12-2" />
+                    <ellipse cx="6" cy="18" rx="3" ry="2.2" />
+                    <ellipse cx="18" cy="16" rx="3" ry="2.2" />
+                </svg>
+            </span>
+            <span class="music-track-name" data-track-label>Perfect · Ed Sheeran</span>
+        </button>
+    </aside>
+    <script src="music-player.js"></script>
+     <script src="goose-footprints.js"></script>
+    <script src="burn-edge.js"></script>
+    <script src="pointer-lens.js"></script>
+    <script>window.memoryOpening?.start();</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.birds.min.js"></script>
+    <script>
+        if (window.VANTA && window.VANTA.BIRDS) {
+            VANTA.BIRDS({
+                el: '#vanta-bg',
+                mouseControls: true,
+                touchControls: true,
+                gyroControls: false,
+                minHeight: 200,
+                minWidth: 200,
+                scale: 1,
+                scaleMobile: 1,
+                backgroundAlpha: 1,
+                backgroundColor: 0x110921,
+                color1: 0x0f60e0,
+                color2: 0x76ffca,
+                colorMode: 'varianceGradient',
+                birdSize: 2.6,
+                wingSpan: 23,
+                speedLimit: 5,
+                separation: 73,
+                alignment: 10,
+                cohesion: 20,
+                quantity: 4
+            });
+        }
+
+        const timelineToggle = document.getElementById('timeline-toggle');
+        const timelineTooltip = timelineToggle.querySelector('.timeline-tooltip');
+        timelineToggle.addEventListener('click', () => {
+            const paused = document.body.classList.toggle('timeline-paused');
+            timelineToggle.setAttribute('aria-pressed', String(paused));
+            timelineToggle.setAttribute('aria-label', paused ? '继续播放卡片和指针' : '暂停卡片和指针');
+            timelineTooltip.textContent = paused ? '让时间继续走' : '让时间停一下';
+        });
+
+        const previewDialog = document.getElementById('preview-dialog');
+        const previewContent = document.getElementById('preview-content');
+
+        document.querySelectorAll('.card-list .card').forEach(card => {
+            card.addEventListener('click', event => {
+                event.preventDefault();
+                const image = card.querySelector('img');
+                previewContent.replaceChildren();
+
+                if (image) {
+                    previewContent.append(image.cloneNode());
+                    const description = document.createElement('p');
+                    description.className = 'preview-description';
+                    description.textContent = card.dataset.description || '';
+                    previewContent.append(description);
+                } else {
+                    const year = document.createElement('div');
+                    year.className = 'preview-year';
+                    year.textContent = card.textContent.trim();
+                    previewContent.append(year);
+                }
+
+                document.body.classList.add('preview-open');
+                previewDialog.showModal();
+            });
+        });
+
+        previewDialog.querySelector('.preview-close').addEventListener('click', () => previewDialog.close());
+        previewDialog.addEventListener('click', event => {
+            if (event.target === previewDialog) previewDialog.close();
+        });
+        previewDialog.addEventListener('close', () => document.body.classList.remove('preview-open'));
+    </script>
+</body>
+</html>

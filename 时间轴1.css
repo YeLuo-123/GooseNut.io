@@ -1,0 +1,41 @@
+:root {
+    --rotate-speed: 40;
+    --count: 8;
+    --easing: cubic-bezier(0.000,0.37,1.000,0.63);
+}
+
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.void {
+    width: 100%;
+    max-width: 1024px;margin: auto;
+    position: relative;
+    aspect-ratio: 1/1;
+}
+ul:hover * {
+    animation-play-state: paused;
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    z-index: 1;
+
+}
+
+li {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    animation: rotateCW calc(var(--rotate-speed));
+}
