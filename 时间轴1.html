@@ -7,9 +7,14 @@
     <script src="opening-animation.js"></script>
     <style>
  :root {
+    --viewport-height: 100vh;
+    --dial-size: min(1120px, 100vw, calc(var(--viewport-height) - 64px));
     --rotate-speed: 40;
     --count: 8;
     --easing: cubic-bezier(0.000,0.37,1.000,0.63);
+}
+@supports (height: 100svh) {
+    :root { --viewport-height: 100svh; }
 }
 
 body {
@@ -18,20 +23,24 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    height: var(--viewport-height);
+    overflow: hidden;
     background: #110921;
 }
 #vanta-bg {
     position: fixed;
-    inset: 0;
+    inset: 0 0 0 50%;
     z-index: 0;
     pointer-events: none;
 }
 
 .void {
-    width: 100%;
-    max-width: 1200px;
-    margin: auto;
-    position: relative;
+    width: var(--dial-size);
+    height: var(--dial-size);
+    margin: 0;
+    position: fixed;
+    left: calc(50vw - var(--dial-size) / 2);
+    top: calc(var(--viewport-height) / 2 - var(--dial-size) / 2);
     z-index: 1;
     aspect-ratio: 1/1;
 }
@@ -58,11 +67,12 @@ li {
 }
 
 .card {
+    box-sizing: border-box;
     width: 36%;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 16px 24px;
+    padding: clamp(8px, 1.5vh, 16px) clamp(10px, 1.6vw, 24px);
     gap: 8px;
     background: #a5cbff;
     box-shadow: 0px 4px 12px rgba(92, 19, 201, 0.1),0px 16px 32px rgba(165, 135, 255, 0.1);
@@ -93,7 +103,7 @@ body.timeline-paused .needle {
     color: unset;
     display: block;
     width: 100%;
-    height: 110px;
+    height: clamp(60px, 11vh, 110px);
     overflow: hidden;
 }
 .preview-dialog {
@@ -404,7 +414,7 @@ svg {
     0px 30px 60px -12px rgba(0, 0, 0, 0.25);
     border-radius: 50%;
     background-size: cover;
-    background-image: url(流体gif.gif);
+    background-image: radial-gradient(ellipse at 25% 30%, #dbeaff, transparent 65%), conic-gradient(from 30deg, #c5d7ed, #f6f9ff, #94b3dd, #e5edfa, #c5d7ed);
 }
 .last-circle {
     position: absolute;
@@ -418,7 +428,7 @@ svg {
     box-shadow: 0px 18px 36px -18px rgba(0, 0, 0, 0.3),
     0px 30px 60px -12px rgba(0, 0, 0, 0.25);
     border-radius: 50%;
-    background-image: url(流体gif.gif);
+    background-image: radial-gradient(ellipse at 70% 25%, #dbeaff, transparent 65%), conic-gradient(from 180deg, #c5d7ed, #f6f9ff, #94b3dd, #e5edfa, #c5d7ed);
 }
 .crop {
     -webkit-mask-image: linear-gradient(90deg,rgba(0,0,0,0) 50%,rgba(0,0,0,1) 50%, rgb(104, 11, 11));
@@ -448,7 +458,7 @@ svg {
     mask-position: left top, right top;
     -webkit-mask-repeat: no-repeat, repeat-y;
     mask-repeat: no-repeat, repeat-y;
-    animation: burn-drift 45s linear infinite;
+    /* 保留溶解轮廓，避免整块屏幕的 CSS mask 每帧重绘。 */
 }
 /* 淡纸纹：调大 opacity 会加深纹理；独立叠层沿用遮罩的溶解轮廓。 */
 .mask::before {
@@ -460,7 +470,7 @@ svg {
     opacity: 0.065;
     pointer-events: none;
 }
-.pointer-lens {
+.lens-background {
     position: absolute;
     inset: 0 auto 0 0;
     width: 50vw;
@@ -471,7 +481,22 @@ svg {
     -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 72px), transparent);
     mask-image: linear-gradient(to right, #000 calc(100% - 72px), transparent);
 }
-.mask > :not(.pointer-lens) { z-index: 1; }
+.lens-photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.085;
+    filter: grayscale(1);
+}
+.pointer-lens {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+.mask > :not(.lens-background) { z-index: 1; }
 .mask.has-burn-edge .side-title {
     right: var(--seam-overhang);
 }
@@ -735,46 +760,49 @@ html.intro-pending .goose-lane {
             <ul class="card-list" style="--count:9;">
                 <li style="--index:0;">
                     <div class="card" data-description="2025.5 妻子假装游客在我的摊位前占位，站街，挪一次五十，我准备拍照留证，但是拍她的时候她感到不好意思不让我拍。"><a href="photos/028da2905db2d06d40d2f81ac4f59ad2.jpg">
-                        <img src="photos/028da2905db2d06d40d2f81ac4f59ad2.jpg" alt="回忆照片 1"></a></div>
+                        <img src="assets/thumbnails/028da2905db2d06d40d2f81ac4f59ad2.webp" data-full="assets/previews/028da2905db2d06d40d2f81ac4f59ad2.webp" decoding="async" alt="回忆照片 1"></a></div>
                 </li>
                 <li style="--index:1;">
                     <div class="card" data-description="2025.4.14 ga08因为大风变成摊主only，撤展的时候让妻子去帮忙拿1个袋子，结果妻子拿回来了20个，还戴在头上说这个是盖头。"><a href="photos/3388ae8ae5231a1cfb426622cb3d7765.jpg">
-                        <img src="photos/3388ae8ae5231a1cfb426622cb3d7765.jpg" alt="回忆照片 2"></a></div>
+                        <img src="assets/thumbnails/3388ae8ae5231a1cfb426622cb3d7765.webp" data-full="assets/previews/3388ae8ae5231a1cfb426622cb3d7765.webp" decoding="async" alt="回忆照片 2"></a></div>
                 </li>
                 <li style="--index:2;">
                     <div class="card" data-description="2025.4 和妻子打了双影奇境全成就，被炸弹炸死了很多次。"><a href="photos/371d11ab36832537ad14d32935efdae8.jpg">
-                        <img src="photos/371d11ab36832537ad14d32935efdae8.jpg" alt="回忆照片 3"></a></div>
+                        <img src="assets/thumbnails/371d11ab36832537ad14d32935efdae8.webp" data-full="assets/previews/371d11ab36832537ad14d32935efdae8.webp" decoding="async" alt="回忆照片 3"></a></div>
                 </li>
                 <li style="--index:3;">
                     <div class="card" data-description="2025.3.21 和妻子打分手厨房，妻子说我们是Neal和Moz"><a href="photos/5f670002a5493eceb0abb0ced3eefe3c.jpg">
-                        <img src="photos/5f670002a5493eceb0abb0ced3eefe3c.jpg" alt="回忆照片 4"></a></div>
+                        <img src="assets/thumbnails/5f670002a5493eceb0abb0ced3eefe3c.webp" data-full="assets/previews/5f670002a5493eceb0abb0ced3eefe3c.webp" decoding="async" alt="回忆照片 4"></a></div>
                 </li>
                 <li style="--index:4;">
                     <div class="card" data-description="2026.5.13 妻子抢了我的switch打人森，我没有一点办法。"><a href="photos/625e4d4b5a3217ed73bc946f8a6c2a29.jpg">
-                        <img src="photos/625e4d4b5a3217ed73bc946f8a6c2a29.jpg" alt="回忆照片 5"></a></div>
+                        <img src="assets/thumbnails/625e4d4b5a3217ed73bc946f8a6c2a29.webp" data-full="assets/previews/625e4d4b5a3217ed73bc946f8a6c2a29.webp" decoding="async" alt="回忆照片 5"></a></div>
                 </li>
                 <li style="--index:5;">
                     <div class="card" data-description="2026.9.12 和妻子在上海，妻子穿了我挑的外套，很可爱"><a href="photos/64d46487cadfaddade1356d9d574b457.jpg">
-                        <img src="photos/64d46487cadfaddade1356d9d574b457.jpg" alt="回忆照片 6"></a></div>
+                        <img src="assets/thumbnails/64d46487cadfaddade1356d9d574b457.webp" data-full="assets/previews/64d46487cadfaddade1356d9d574b457.webp" decoding="async" alt="回忆照片 6"></a></div>
                 </li>
                 <li style="--index:6;">
                     <div class="card" data-description="2026.5.3 妻子在被淹家洗碗，穿了我的风衣，有萌袖。"><a href="photos/795505d31fc432c70495aebc2049a27c.jpg">
-                        <img src="photos/795505d31fc432c70495aebc2049a27c.jpg" alt="回忆照片 7"></a></div>
+                        <img src="assets/thumbnails/795505d31fc432c70495aebc2049a27c.webp" data-full="assets/previews/795505d31fc432c70495aebc2049a27c.webp" decoding="async" alt="回忆照片 7"></a></div>
                 </li>
                 <li style="--index:7;">
                     <div class="card" data-description="2026.5.4 11:15 妻子拉着我的手不让我起床，并且发出尖锐的爆鸣表示不想起床，鉴定为卖萌。"><a href="photos/a0e84de26154d59046bb5f5fd027cfa8.jpg">
-                        <img src="photos/a0e84de26154d59046bb5f5fd027cfa8.jpg" alt="回忆照片 8"></a></div>
+                        <img src="assets/thumbnails/a0e84de26154d59046bb5f5fd027cfa8.webp" data-full="assets/previews/a0e84de26154d59046bb5f5fd027cfa8.webp" decoding="async" alt="回忆照片 8"></a></div>
                 </li>
                 <li style="--index:8;">
                     <div class="card" data-description="2025.4.7 妻子从英国回来，给我带了伴手礼"><a href="photos/df61a29fb0acbe4ee76921bf306a44bf.jpg">
-                        <img src="photos/df61a29fb0acbe4ee76921bf306a44bf.jpg" alt="回忆照片 9"></a></div>
+                        <img src="assets/thumbnails/df61a29fb0acbe4ee76921bf306a44bf.webp" data-full="assets/previews/df61a29fb0acbe4ee76921bf306a44bf.webp" decoding="async" alt="回忆照片 9"></a></div>
                 </li>
             </ul>
             <div class="last-circle"></div>
             <div class="second-circle"></div>
         </div>
         <div class="mask">
-            <canvas class="pointer-lens" aria-hidden="true" data-image="photos/4d32b18d69e5fd2229c3136152872ae9.jpg"></canvas>
+            <div class="lens-background" aria-hidden="true">
+                <img class="lens-photo" src="assets/lens-background.webp" alt="" decoding="async">
+                <canvas class="pointer-lens"></canvas>
+            </div>
             <!-- 左上角与左下角英文装饰文案 -->
             <p class="corner-caption corner-caption--top-left" aria-hidden="true" lang="en">
                 <span>THE MEMORY ARCHIVE</span>
@@ -792,9 +820,9 @@ html.intro-pending .goose-lane {
             <div class="goose-lane" aria-hidden="true">
                 <div class="goose-trail"></div>
                 <div class="goose">
-                    <img class="goose-frame" src="goose/757e7addd28c1f13004b2669111fccf5.png" alt="" draggable="false">
-                    <img class="goose-frame goose-frame--second" src="goose/17ecd9bbb8282b26a9cd446ea7e45325.png" alt="" draggable="false">
-                    <img class="goose-frame goose-frame--hover" src="goose/ee9b0a49df599babbf4577070ebfb33f.png" alt="" draggable="false">
+                    <img class="goose-frame" src="assets/757e7addd28c1f13004b2669111fccf5.webp" decoding="async" alt="" draggable="false">
+                    <img class="goose-frame goose-frame--second" src="assets/17ecd9bbb8282b26a9cd446ea7e45325.webp" decoding="async" alt="" draggable="false">
+                    <img class="goose-frame goose-frame--hover" src="assets/ee9b0a49df599babbf4577070ebfb33f.webp" decoding="async" alt="" draggable="false">
                 </div>
             </div>
         </div>
@@ -803,7 +831,7 @@ html.intro-pending .goose-lane {
             <span class="timeline-tooltip" aria-hidden="true">让时间停一下</span>
         </button>
         <div class="needle">
-            <img src="微信图片_20240921200501.png" alt="缓慢旋转的时针图案">
+            <img src="assets/needle.webp" decoding="async" alt="缓慢旋转的时针图案">
         </div>
     </div>
     <dialog class="preview-dialog" id="preview-dialog" aria-label="卡片放大预览">
@@ -833,36 +861,12 @@ html.intro-pending .goose-lane {
     <script src="music-player.js"></script>
      <script src="goose-footprints.js"></script>
     <script src="burn-edge.js"></script>
-    <script src="pointer-lens.js"></script>
+    <script src="pointer-lens.js?v=2"></script>
     <script>window.memoryOpening?.start();</script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.birds.min.js"></script>
+    <script defer src="vendor/three.r134.min.js"></script>
+    <script defer src="vendor/vanta.birds.0.5.24.min.js"></script>
+    <script defer src="birds-background.js"></script>
     <script>
-        if (window.VANTA && window.VANTA.BIRDS) {
-            VANTA.BIRDS({
-                el: '#vanta-bg',
-                mouseControls: true,
-                touchControls: true,
-                gyroControls: false,
-                minHeight: 200,
-                minWidth: 200,
-                scale: 1,
-                scaleMobile: 1,
-                backgroundAlpha: 1,
-                backgroundColor: 0x110921,
-                color1: 0x0f60e0,
-                color2: 0x76ffca,
-                colorMode: 'varianceGradient',
-                birdSize: 2.6,
-                wingSpan: 23,
-                speedLimit: 5,
-                separation: 73,
-                alignment: 10,
-                cohesion: 20,
-                quantity: 4
-            });
-        }
-
         const timelineToggle = document.getElementById('timeline-toggle');
         const timelineTooltip = timelineToggle.querySelector('.timeline-tooltip');
         timelineToggle.addEventListener('click', () => {
@@ -882,7 +886,9 @@ html.intro-pending .goose-lane {
                 previewContent.replaceChildren();
 
                 if (image) {
-                    previewContent.append(image.cloneNode());
+                    const fullImage = image.cloneNode();
+                    fullImage.src = image.dataset.full || image.src;
+                    previewContent.append(fullImage);
                     const description = document.createElement('p');
                     description.className = 'preview-description';
                     description.textContent = card.dataset.description || '';
